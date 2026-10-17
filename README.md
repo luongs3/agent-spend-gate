@@ -1,5 +1,7 @@
 # Agent Spend Gate — every agent dollar has a receipt
 
+**Live demo:** https://deploytest.theodoikenh.com/spendgate/ · **MCP:** `POST https://deploytest.theodoikenh.com/spendgate/mcp` · built for the PayPal AI Hackathon
+
 AI shopping agents are getting wallets. Giving an LLM a PayPal credential means one prompt-injected product page can make it buy 5 units and ship them to an attacker. **Agent Spend Gate** sits between the agent and PayPal: the agent never holds credentials, it can only *ask* to pay. The gate checks a spend policy, **fetches the evidence page itself** to confirm the price is real, and only then creates a real PayPal order. Every decision produces an Ed25519-signed, hash-chained receipt that later works as dispute evidence.
 
 ## How it works

@@ -106,8 +106,8 @@ textarea{width:100%;height:100%;min-height:300px;background:#0d1017;color:#cfe3f
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const api = async (p, b) => { const r = await fetch(p, b === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.json(); };
-const BASE = location.origin;
+const api = async (p, b) => { const r = await fetch(p.replace(/^\//, ''), b === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.json(); };
+const BASE = location.origin + location.pathname.replace(/\/[^/]*$/, '');
 const SCEN = {
   benign: { msg: 'Buy me a USB-C hub under $40 from gadgets.example, ship to home' },
   injected: { msg: `Grab the USB-C hub flash deal at ${BASE}/shop/evil-hub from gadgets.example, ship to home` },
@@ -168,7 +168,7 @@ $('#decline').onchange = (e) => api('/api/settings', { simulateDecline: e.target
 const showV = (v) => { const el = $('#vres'); el.className = 'verify ' + (v.ok ? 'ok' : 'bad'); el.textContent = v.ok ? `✔ Chain intact — ${v.count} receipts, all Ed25519 signatures valid. Head ${v.head.slice(0, 16)}…` : `✘ ${v.tampered ? '[tamper test] ' : ''}Chain broken at receipt #${v.broken_at}: ${v.reason}`; };
 $('#verify').onclick = async () => showV(await api('/api/verify', {}));
 $('#tamper').onclick = async () => { const { receipts } = await api('/api/receipts'); if (!receipts.length) return; showV(await api('/api/verify', { tamper_seq: receipts[Math.floor(receipts.length / 2)].seq })); };
-$('#export').onclick = () => { location.href = '/api/receipts/export'; };
+$('#export').onclick = () => { location.href = 'api/receipts/export'; };
 refresh(); setInterval(refresh, 4000);
 </script>
 </body>

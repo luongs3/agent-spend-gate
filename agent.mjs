@@ -1,3 +1,4 @@
+import { localize } from './lib/evidence.mjs';
 // LLM shopping agent (Groq, OpenAI-compatible, gpt-oss-120b). It has NO payment credentials:
 // its only way to spend is the gate's request_payment tool.
 import { readFileSync, existsSync } from 'node:fs';
@@ -56,7 +57,7 @@ export async function runAgent({ message, gate, paypal, baseUrl, mode = 'gated',
       let result;
       try {
         if (tc.function.name === 'browse') {
-          const r = await fetch(args.url, { signal: AbortSignal.timeout(5000) });
+          const r = await fetch(localize(args.url), { signal: AbortSignal.timeout(5000) });
           const html = await r.text();
           // Deliberately UNFILTERED: hidden injected text reaches the model, like a real scraper.
           result = html.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 4000);

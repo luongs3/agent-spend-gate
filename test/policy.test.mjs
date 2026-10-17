@@ -18,3 +18,8 @@ test('dedupes within window, allows after', () => {
   assert.equal(evaluatePolicy(P, req, s, 1_000_000 + 30_000).verdict, 'DENY');
   assert.equal(evaluatePolicy(P, req, s, 1_000_000 + 61_000).verdict, 'ALLOW');
 });
+
+test('dedupe ignores item-name rewording for the same product page', () => {
+  const base = { merchant: 'gadgets.example', amount: 24.99, ship_to: 'home', quantity: 1, evidence_url: 'http://x/shop/usb-c-hub' };
+  assert.equal(idempotencyKey({ ...base, item: 'USB-C hub' }), idempotencyKey({ ...base, item: '7-in-1 USB-C Hub' }));
+});
