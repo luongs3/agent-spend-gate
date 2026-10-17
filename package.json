@@ -1,0 +1,15 @@
+{
+  "name": "agent-spend-gate",
+  "version": "1.0.0",
+  "description": "A policy + evidence gate between AI shopping agents and PayPal. Every agent dollar has a signed receipt.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "eval": "node eval.mjs",
+    "eval:agent": "node eval.mjs --agent",
+    "judge-demo": "node eval.mjs"
+  }
+}

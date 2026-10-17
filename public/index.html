@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agent Spend Gate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--bg:#0b0d12;--panel:#12151d;--panel2:#181c26;--line:#232838;--text:#e6e9f2;--mute:#8a93a8;--acc:#7c9cff;
+--allow:#22c55e;--deny:#ef4444;--hold:#f59e0b;--failed:#a855f7;--approved:#14b8a6;--rejected:#64748b}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#1a2240 0,transparent 60%),var(--bg);color:var(--text);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:16px;padding:14px 22px;border-bottom:1px solid var(--line);background:#0d1017cc;backdrop-filter:blur(6px)}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#7c9cff,#22c55e);display:grid;place-items:center;font-weight:800;color:#0b0d12}
+h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+h1 span{color:var(--mute);font-weight:500}
+.sp{flex:1}
+.badge{font-size:12px;color:var(--mute);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.badge b{color:var(--allow)}
+main{flex:1;display:grid;grid-template-columns:1.15fr .9fr 1.15fr;gap:14px;padding:14px;min-height:0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+section>h2{margin:0;padding:12px 16px;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.body{padding:14px;overflow:auto;flex:1}
+button,select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);color:#0b0d12;border-color:var(--acc);font-weight:600}
+button.ok{background:var(--allow);color:#04130a;border-color:var(--allow);font-weight:600}
+button.bad{background:transparent;color:var(--deny);border-color:var(--deny);font-weight:600}
+button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.msg{margin:0 0 10px;padding:10px 12px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);white-space:pre-wrap;word-break:break-word}
+.msg.user{background:#1d2747;border-color:#2c3a66;margin-left:40px}
+.msg.agent{margin-right:40px}
+.msg.tool{font:12px/1.4 ui-monospace,Menlo,monospace;color:#b7c0d6;background:#0f1219}
+.msg .lbl{display:block;font:600 11px ui-sans-serif,system-ui;color:var(--mute);margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px}
+.msg.inj{border-color:#5b1d1d;background:#1a0f12}
+.composer{border-top:1px solid var(--line);padding:10px;display:flex;gap:8px}
+.composer input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 12px;font:inherit}
+textarea{width:100%;height:100%;min-height:300px;background:#0d1017;color:#cfe3ff;border:1px solid var(--line);border-radius:10px;padding:12px;font:12.5px/1.5 ui-monospace,Menlo,monospace;resize:none}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.stat small{color:var(--mute);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+.stat b{font-size:18px}
+.bar{height:6px;background:#0d1017;border-radius:9px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--allow),var(--hold))}
+.toggle{display:flex;align-items:center;gap:8px;color:var(--mute);font-size:13px;cursor:pointer}
+.chip{font:700 11px ui-sans-serif,system-ui;letter-spacing:.8px;padding:3px 8px;border-radius:6px;color:#0b0d12}
+.c-ALLOW{background:var(--allow)}.c-DENY{background:var(--deny);color:#fff}.c-HOLD{background:var(--hold)}.c-FAILED{background:var(--failed);color:#fff}.c-APPROVED{background:var(--approved)}.c-REJECTED{background:var(--rejected);color:#fff}
+.rc{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:10px;background:var(--panel2);animation:in .35s ease}
+.rc.ALLOW{border-left-color:var(--allow)}.rc.DENY{border-left-color:var(--deny)}.rc.HOLD{border-left-color:var(--hold)}.rc.FAILED{border-left-color:var(--failed)}.rc.APPROVED{border-left-color:var(--approved)}.rc.REJECTED{border-left-color:var(--rejected)}
+.rc .t{display:flex;gap:8px;align-items:center}
+.rc .amt{font-weight:700;font-size:15px}
+.rc .meta{color:var(--mute);font-size:12px;margin-top:4px}
+.rc ul{margin:6px 0 0;padding-left:18px;color:#cbd2e2;font-size:12.5px}
+.mono{font:11px ui-monospace,Menlo,monospace;color:var(--mute);word-break:break-all}
+.pp{font:11.5px ui-monospace,Menlo,monospace;color:#9fd8b4;margin-top:6px}
+.verify{padding:10px 12px;border-radius:10px;margin-bottom:10px;display:none}
+.verify.ok{display:block;background:#0c2216;border:1px solid #1d5a35;color:#86efac}
+.verify.bad{display:block;background:#2a0f12;border:1px solid #6b1d24;color:#fca5a5}
+@keyframes in{from{opacity:0;transform:translateY(-6px)}to{opacity:1}}
+.empty{color:var(--mute);text-align:center;margin-top:40px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--mute);border-top-color:transparent;border-radius:50%;animation:r .8s linear infinite;vertical-align:-2px}
+@keyframes r{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">$</div>
+  <h1>Agent Spend Gate <span>— every agent dollar has a receipt</span></h1>
+  <div class="sp"></div>
+  <span class="badge">PayPal <b>sandbox</b> · Orders v2</span>
+  <span class="badge">MCP · <code>POST /mcp</code></span>
+  <select id="scenario">
+    <option value="benign">Demo: benign hub purchase</option>
+    <option value="injected">Demo: prompt-injected page</option>
+    <option value="overcap">Demo: over-threshold keyboard (HOLD)</option>
+    <option value="decline">Demo: card decline</option>
+  </select>
+  <button class="primary" id="run">Run demo scenario</button>
+</header>
+<main>
+  <section>
+    <h2>🤖 Shopping agent <span class="sp"></span><span class="mono">gpt-oss-120b via Groq</span></h2>
+    <div class="body" id="chat"><div class="empty">Ask the agent to buy something, or run a demo scenario.<br>The agent has no PayPal credentials — only the gate's <code>request_payment</code> tool.</div></div>
+    <form class="composer" id="form"><input id="input" placeholder="Buy me a USB-C hub under $40 from gadgets.example, ship to home" autocomplete="off"><button class="primary" id="send">Send</button></form>
+  </section>
+  <section>
+    <h2>🛡️ Policy <span class="sp"></span><span class="mono" id="phash"></span></h2>
+    <div class="body" style="display:flex;flex-direction:column">
+      <div class="stat">
+        <div><small>Spent today</small><b id="spent">$0.00</b><div class="bar"><i id="bari" style="width:0"></i></div></div>
+        <div><small>Open holds</small><b id="holds">0</b></div>
+      </div>
+      <div style="flex:1;min-height:0"><textarea id="policy" spellcheck="false"></textarea></div>
+      <div class="row" style="margin-top:10px">
+        <button id="save">Save policy</button>
+        <button id="reset">Reset daily spend</button>
+        <span class="sp"></span>
+        <label class="toggle"><input type="checkbox" id="decline"> simulate decline</label>
+      </div>
+    </div>
+  </section>
+  <section>
+    <h2>🧾 Signed receipts <span class="sp"></span><button id="verify">Verify chain</button><button id="tamper" title="Verify a copy with one receipt altered">Tamper test</button><button id="export">Export dispute evidence</button></h2>
+    <div class="body"><div id="vres" class="verify"></div><div id="receipts"></div></div>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const api = async (p, b) => { const r = await fetch(p, b === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.json(); };
+const BASE = location.origin;
+const SCEN = {
+  benign: { msg: 'Buy me a USB-C hub under $40 from gadgets.example, ship to home' },
+  injected: { msg: `Grab the USB-C hub flash deal at ${BASE}/shop/evil-hub from gadgets.example, ship to home` },
+  overcap: { msg: 'Buy the mechanical keyboard from gadgets.example, ship to office' },
+  decline: { msg: 'Buy an HDMI cable from gadgets.example, ship to home', decline: true },
+};
+let state;
+async function loadState() {
+  state = await api('/api/state');
+  if (document.activeElement !== $('#policy')) $('#policy').value = JSON.stringify(state.policy, null, 2);
+  $('#spent').textContent = '$' + state.spent_today.toFixed(2) + ' / $' + state.policy.daily_cap;
+  $('#bari').style.width = Math.min(100, state.spent_today / state.policy.daily_cap * 100) + '%';
+  $('#holds').textContent = state.open_holds.length;
+  $('#decline').checked = state.settings.simulateDecline;
+}
+function card(r, open) {
+  const q = r.request || {};
+  const pp = r.paypal;
+  const ppTxt = pp ? [pp.intent, pp.status, pp.order_id && 'order ' + pp.order_id, pp.capture_id && 'capture ' + pp.capture_id, pp.authorization_id && 'auth ' + pp.authorization_id, pp.debug_id && 'debug ' + pp.debug_id].filter(Boolean).join(' · ') : 'no PayPal call — money never moved';
+  const ev = r.evidence ? `<div class="meta">evidence: ${r.evidence.found ? '✔ quote found' : '✘ quote not verified'} · <a style="color:var(--acc)" href="${esc(r.evidence.url)}" target="_blank">${esc((r.evidence.url || '').replace(/^https?:\/\//, ''))}</a></div>` : '';
+  const act = open ? `<div class="row" style="margin-top:8px"><button class="ok" onclick="resolve(${r.seq},'approve')">Approve & capture</button><button class="bad" onclick="resolve(${r.seq},'reject')">Reject & void</button></div>` : '';
+  return `<div class="rc ${r.decision}"><div class="t"><span class="chip c-${r.decision}">${r.decision}</span><span class="amt">$${Number(q.amount).toFixed(2)}</span><span>${esc(q.quantity > 1 ? q.quantity + '× ' : '')}${esc(q.item)}</span><span class="sp"></span><span class="mono">#${r.seq}</span></div>
+  <div class="meta">${esc(q.merchant)} → ship to <b>${esc(q.ship_to)}</b> · ${new Date(r.ts).toLocaleTimeString()} · via ${esc(r.context?.source || r.context?.approver || 'gate')}</div>
+  <ul>${(r.reasons || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>${ev}<div class="pp">${esc(ppTxt)}</div>${act}
+  <div class="mono" style="margin-top:6px">hash ${r.hash.slice(0, 24)}… ← prev ${r.prev_hash.slice(0, 12)}… · sig ed25519 ${r.sig.slice(0, 16)}…</div></div>`;
+}
+async function loadReceipts() {
+  const { receipts, open_holds } = await api('/api/receipts');
+  $('#receipts').innerHTML = receipts.length ? receipts.slice().reverse().map(r => card(r, open_holds.includes(r.seq))).join('') : '<div class="empty">No receipts yet.</div>';
+}
+window.resolve = async (seq, action) => { await api(`/api/holds/${seq}/${action}`, {}); refresh(); };
+const refresh = () => Promise.all([loadState(), loadReceipts()]);
+
+function addMsg(cls, label, html) { const c = $('#chat'); if (c.querySelector('.empty')) c.innerHTML = ''; c.insertAdjacentHTML('beforeend', `<div class="msg ${cls}"><span class="lbl">${label}</span>${html}</div>`); c.scrollTop = c.scrollHeight; }
+async function runAgent(message, decline) {
+  $('#send').disabled = $('#run').disabled = true;
+  addMsg('user', 'You', esc(message));
+  addMsg('agent', 'Agent', '<span class="spin"></span> thinking…'); const pending = $('#chat').lastElementChild;
+  try {
+    const out = await api('/api/agent', { message, simulate_decline: decline || $('#decline').checked });
+    pending.remove();
+    if (out.error) addMsg('agent', 'Error', esc(out.error));
+    for (const e of out.transcript || []) {
+      if (e.type === 'tool_call') addMsg('tool', 'tool call · ' + e.name, esc(JSON.stringify(e.args, null, 1)));
+      else if (e.type === 'tool_result') addMsg('tool' + (/SYSTEM:/i.test(e.text) ? ' inj' : ''), 'page text returned to agent' + (/SYSTEM:/i.test(e.text) ? ' · ⚠ contains injected instructions' : ''), esc(e.text));
+      else if (e.type === 'gate') addMsg('tool', 'gate decision', `<span class="chip c-${e.receipt.decision}">${e.receipt.decision}</span> receipt #${e.receipt.seq}\n${esc(e.receipt.reasons.join('\n'))}`);
+      else if (e.type === 'agent') addMsg('agent', 'Agent', esc(e.text));
+    }
+  } catch (err) { pending.remove(); addMsg('agent', 'Error', esc(err.message)); }
+  $('#send').disabled = $('#run').disabled = false;
+  refresh();
+}
+$('#form').onsubmit = (e) => { e.preventDefault(); const m = $('#input').value.trim() || $('#input').placeholder; $('#input').value = ''; runAgent(m); };
+$('#run').onclick = async () => { const s = SCEN[$('#scenario').value]; if ($('#scenario').value !== 'benign') await api('/api/reset-day', {}); runAgent(s.msg, s.decline); };
+$('#save').onclick = async () => { try { await api('/api/policy', JSON.parse($('#policy').value)); $('#save').textContent = 'Saved ✔'; setTimeout(() => $('#save').textContent = 'Save policy', 1200); loadState(); } catch (e) { alert('Invalid JSON: ' + e.message); } };
+$('#reset').onclick = async () => { await api('/api/reset-day', {}); loadState(); };
+$('#decline').onchange = (e) => api('/api/settings', { simulateDecline: e.target.checked });
+const showV = (v) => { const el = $('#vres'); el.className = 'verify ' + (v.ok ? 'ok' : 'bad'); el.textContent = v.ok ? `✔ Chain intact — ${v.count} receipts, all Ed25519 signatures valid. Head ${v.head.slice(0, 16)}…` : `✘ ${v.tampered ? '[tamper test] ' : ''}Chain broken at receipt #${v.broken_at}: ${v.reason}`; };
+$('#verify').onclick = async () => showV(await api('/api/verify', {}));
+$('#tamper').onclick = async () => { const { receipts } = await api('/api/receipts'); if (!receipts.length) return; showV(await api('/api/verify', { tamper_seq: receipts[Math.floor(receipts.length / 2)].seq })); };
+$('#export').onclick = () => { location.href = '/api/receipts/export'; };
+refresh(); setInterval(refresh, 4000);
+</script>
+</body>
+</html>
